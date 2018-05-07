@@ -13,5 +13,5 @@ Allowed file types: (MIME)
 - text/javascript
 
 ## Usage: mosPutFile.sh --src=\<name\> --dest=\<name\> [--p=<port>] [--verbose]
-  
-Publisehd under the MIT license.
+
+Use at your own risk! (see license disclaimer). Publisehd under the MIT license.
