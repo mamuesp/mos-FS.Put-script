@@ -36,7 +36,12 @@ handleSingleFile() {
 	then
 		mimetype="$(file --mime-type -b $filename)"
 		case "${mimetype}" in
-			application/x-gzip | text/html | text/plain)
+			application/octet-stream | \
+			application/x-gzip | \
+			text/html | \
+			text/plain | \
+			text/css | \
+			text/javascript )
 				base=$(basename "$filename") 
 				destfile=$(printf '%s/%s' "$destfile" "$base")
 			;;
