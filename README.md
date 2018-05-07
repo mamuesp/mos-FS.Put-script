@@ -12,6 +12,6 @@ Allowed file types: (MIME)
 - text/css
 - text/javascript
 
-#Usage: mosPutFile.sh --src=<name> --dest=<name> [--p=<port>] [--verbose]
+# Usage: mosPutFile.sh --src=<name> --dest=<name> [--p=<port>] [--verbose]
   
 Publisehd under the MIT license.
