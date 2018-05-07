@@ -13,7 +13,11 @@ Allowed file types: (MIME)
 - text/javascript
 - text/json
 - application/octet-stream
+- image/svg 
 
 ## Usage: mosPutFile.sh --src=\<name\> --dest=\<name\> [--p=<port>] [--verbose]
 
+		- "src" might be a file or a directory
+		- "dest" has to be a single diretory name e.g."/mnt"
+		
 Use at your own risk! (see license disclaimer). Publisehd under the MIT license.

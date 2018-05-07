@@ -26,6 +26,36 @@
 
 usage="Usage: mosPutFile.sh --src=<name> --dest=<name> [--p=<port>] [--verbose]"
 
+transferLine() {
+	if [[ -z "${chunkData// }" ]]
+	then 
+		return 0
+	fi
+	
+	# prepare the argument JSON string for the RPC call
+	jsondata=$(printf '{\"filename\": \"%s\", \"data\": \"%s\", \"append\": %b}' "$destfile" "$chunkData" "$append");
+	datasize=${#chunkData}
+	# we have to ad "1" because of the counted linefeeds
+	transferred=$((transferred+datasize))
+	chunkData=""
+# 	echo $jsondata
+	# call the Mongoose-OS device via RPC and transfer the data
+  msg="$(~/.mos/bin/mos --timeout 30s --port="$port" call FS.Put "$jsondata")";
+	# some errorhandling and a "progress bar" ...
+	msg="null"
+	if [[ "$msg" == "null" ]]
+	then
+		prog=$(echo "(($transferred*100.0)/$b64size)" | bc)
+		printf "\rBytes sent: [$transferred/$b64size] (${prog}%%)"
+	else
+		# something happened ...
+		echo "$msg"
+		return 1
+	fi
+	append=true
+	return 0
+}
+
 handleSingleFile() {
 	srcfile="$1"		# filename to transfer
 	destfile="$2" 	# filename on the device
@@ -38,11 +68,12 @@ handleSingleFile() {
 		case "${mimetype}" in
 			application/octet-stream | \
 			application/x-gzip | \
-			text/html | \
 			text/plain | \
+			text/html | \
 			text/css | \
 			text/json | \
-			text/javascript )
+			text/javascript | \
+			image/svg )
 				base=$(basename "$srcfile") 
 				destfile=$(printf '%s/%s' "$destfile" "$base")
 			;;
@@ -65,34 +96,29 @@ handleSingleFile() {
 	# encode the file and gather the base64 encoeded data
 	b64data="$(openssl base64 -in $srcfile)";
 	lineNum=$(echo -n "$b64data" | grep -c '^')
-	counter=0
-	append=false
+	b64size=${#b64data}
+	b64size=$((b64size-lineNum-1))
 	transferred=0
+	chunkCount=50
+	chunkSize=0
+	chunkData=""
+	currCout=$chunkCount
+	append=false
+	
 	echo Copy "$srcfile" to "$destfile" ...
   
 	# now traverse the base64 data line by line
 	while IFS= read -r line
 	do
-		# prepare the argument JSON string for the RPC call
-		jsondata=$(printf '{\"filename\": \"%s\", \"data\": \"%s\", \"append\": %b}' "$destfile" "$line" "$append");
-#		echo $jsondata
-		# call the Mongoose-OS device via RPC and transfer the data
-		msg="$(~/.mos/bin/mos --timeout 30s --port="$port" call FS.Put "$jsondata")";
-		# some errorhandling and a "progress bar" ...
-		if [[ "$msg" == "null" ]]
+		chunkData=$chunkData$line
+		currCount=$((currCount-1))
+		if [[ "$currCount" -le 0 ]]
 		then
-			counter=$((counter+1))
-  		prog=$(echo "(($counter*100.0)/$lineNum)" | bc)
-  		chunksize=${#line}
-  		transferred=$((transferred+chunksize))
-			printf "\rBytes sent: [$transferred] (${prog}%%)"
-		else
-		  # something happened ...
-			echo "$msg"
-			return 1
-		fi	
-		append=true
+			transferLine
+			currCount=$chunkCount
+		fi
 	done < <(printf '%s\n' "$b64data")
+	transferLine
 	echo "FS.Put call finished!"
 }
 
