@@ -27,22 +27,23 @@
 usage="Usage: mosPutFile.sh --src=<name> --dest=<name> [--p=<port>] [--verbose]"
 
 handleSingleFile() {
-	filename="$1"		# filename to transfer
+	srcfile="$1"		# filename to transfer
 	destfile="$2" 	# filename on the device
 	port="$3"				# port used (to be able to use WS pors)
 	verbose="$4" 		# verboce flag
 
-	if [ -f "${filename}" ]
+	if [ -f "${srcfile}" ]
 	then
-		mimetype="$(file --mime-type -b $filename)"
+		mimetype="$(file --mime-type -b $srcfile)"
 		case "${mimetype}" in
 			application/octet-stream | \
 			application/x-gzip | \
 			text/html | \
 			text/plain | \
 			text/css | \
+			text/json | \
 			text/javascript )
-				base=$(basename "$filename") 
+				base=$(basename "$srcfile") 
 				destfile=$(printf '%s/%s' "$destfile" "$base")
 			;;
 			*)
@@ -53,22 +54,22 @@ handleSingleFile() {
 	fi
 
 	# if no destination file is given, we try to use the source file name
-	if [[ -z "${devfile// }" ]]
+	if [[ -z "${destfile// }" ]]
 		then 
-		devfile="$filename"
+		destfile="$srcfile"
 	fi
 
 	# check, if the source file exists
-	[ -f "$filename" ] || die "File $filename does not exist"
+	[ -f "$srcfile" ] || die "File $srcfile does not exist"
 	
 	# encode the file and gather the base64 encoeded data
-	b64data="$(openssl base64 -in $filename)";
+	b64data="$(openssl base64 -in $srcfile)";
 	lineNum=$(echo -n "$b64data" | grep -c '^')
 	counter=0
 	append=false
- 	destfile="$2"
-	echo Copy "$filename" to "$destfile" ...
-
+	transferred=0
+	echo Copy "$srcfile" to "$destfile" ...
+  
 	# now traverse the base64 data line by line
 	while IFS= read -r line
 	do
@@ -82,7 +83,7 @@ handleSingleFile() {
 		then
 			counter=$((counter+1))
   		prog=$(echo "(($counter*100.0)/$lineNum)" | bc)
-  		chunksize=${#b64data}
+  		chunksize=${#line}
   		transferred=$((transferred+chunksize))
 			printf "\rBytes sent: [$transferred] (${prog}%%)"
 		else
