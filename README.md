@@ -11,6 +11,7 @@ Allowed file types: (MIME)
 - text/plain
 - text/css
 - text/javascript
+- text/json
 - application/octet-stream
 
 ## Usage: mosPutFile.sh --src=\<name\> --dest=\<name\> [--p=<port>] [--verbose]
