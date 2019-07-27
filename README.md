@@ -1,6 +1,6 @@
 # mos-FS.Put-script
 
-Reads a single file, encodes it in base64 and transfers it via "mos call FS.Put"
+Reads a single file (files of an directory, one by one), encodes it with base64 and transfers it via "mos call FS.Put"
 (RPC) to the Mongoose-OS driven device The lines are transferred one by one,
 so there is no problem with any chunk size limits. If a directory name is given as
 source, it will transfer all allowed files found in the driectory.
